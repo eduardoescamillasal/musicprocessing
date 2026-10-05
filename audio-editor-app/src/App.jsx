@@ -1,122 +1,112 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React from "react";
+import { useAudioEngine } from "./hooks/useAudioEngine";
+import TransportPanel from "./components/TransportPanel";
+import EffectsPanel from "./components/EffectsPanel";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const audioEngine = useAudioEngine();
+
+  // If no file has been parsed yet, keep the UI minimal
+  const {
+    fileName,
+    audioBuffer,
+    isProcessing,
+    containerRef,
+    handleFileUpload,
+  } = audioEngine;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div
+      style={{
+        backgroundColor: "#1e1e24",
+        color: "#f3f4f6",
+        minHeight: "100vh",
+        padding: "20px",
+        fontFamily: "monospace",
+      }}
+    >
+      <header
+        style={{
+          borderBottom: "2px solid #374151",
+          paddingBottom: "15px",
+          marginBottom: "20px",
+        }}
+      >
+        <h2 style={{ color: "#38bdf8", margin: "0 0 10px 0" }}>
+          Audacity Web Edition 🎛️
+        </h2>
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={handleFileUpload}
+          style={{ color: "#9ca3af" }}
+        />
+        {isProcessing && (
+          <span style={{ marginLeft: "15px", color: "#fbbf24" }}>
+            Processing Audio...
+          </span>
+        )}
+      </header>
 
-      <div className="ticks"></div>
+      {fileName && (
+        <main>
+          {/* Metadata Bar */}
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              fontSize: "12px",
+              color: "#9ca3af",
+              marginBottom: "10px",
+            }}
+          >
+            <div>
+              <strong>Track Name:</strong> {fileName}
+            </div>
+            <div>
+              <strong>Sample Rate:</strong> {audioBuffer?.sampleRate} Hz
+            </div>
+            <div>
+              <strong>Duration:</strong> {audioBuffer?.duration.toFixed(2)}s
+            </div>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {/* Core Waveform Display Container Element */}
+          <div
+            style={{
+              backgroundColor: "#111827",
+              borderRadius: "6px",
+              padding: "15px",
+              border: "1px solid #4f46e5",
+              marginBottom: "20px",
+            }}
+          >
+            <div ref={containerRef} />
+          </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          {/* Interactive Workspace Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "20px",
+            }}
+          >
+            <TransportPanel
+              isPlaying={audioEngine.isPlaying}
+              onPlayPause={audioEngine.handlePlayPause}
+              onReverse={audioEngine.handleReverse}
+            />
+
+            <EffectsPanel
+              semitones={audioEngine.semitones}
+              onTranspose={audioEngine.handleTranspose}
+              frequency={audioEngine.frequency}
+              onFrequencyChange={audioEngine.handleFrequencyChange}
+            />
+          </div>
+        </main>
+      )}
+    </div>
+  );
 }
-
-export default App
